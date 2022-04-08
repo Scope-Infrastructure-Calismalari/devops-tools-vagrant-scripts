@@ -1,0 +1,48 @@
+version: '3.7'
+
+services:
+  
+  dockertestagent1:
+    hostname: dockertestagent1
+    image: jenkins/inbound-agent:4.7-1-jdk11
+    container_name: dockertestagent1
+    restart: unless-stopped
+    environment:
+      # url for the Jenkins server, can be used as a replacement to -url option, or to set alternate jenkins URL
+      - "JENKINS_URL=http://192.168.33.10:8080"
+      # (HOST:PORT) connect to this agent host and port instead of Jenkins server, 
+      # assuming this one do route TCP traffic to Jenkins master. 
+      # Useful when when Jenkins runs behind a load balancer, reverse proxy, etc.
+      # - "JENKINS_TUNNEL="
+      # agent secret, if not set as an argument
+      - "JENKINS_SECRET=b6cb9742fc2ec77eabba517d029674d08d73859bb5e64f188e0ef533243dd8de"
+      # agent name, if not set as an argument
+      - "JENKINS_AGENT_NAME=dockertestagent1"
+      # agent work directory, if not set by optional parameter -workDir
+      - "JENKINS_AGENT_WORKDIR=/home/jenkins/agent"
+      # true if the connection should be made via WebSocket rather than TCP
+      - "JENKINS_WEB_SOCKET=true"
+    volumes:
+      # Access Docker socket inside the Docker Container.
+      - '/var/run/docker.sock:/var/run/docker.sock'
+    ports:
+      - 8080:8080
+      - 8443:8443
+      # You can run builds on the master (out of the box) but if you want to attach build slave servers: 
+      # make sure you map the port: -p 50000:50000 - which will be used when you connect a slave agent.
+      - 50000:50000
+    networks:
+      - docker-net
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4096M
+        reservations:
+          cpus: '0.001'
+          memory: 128M
+
+networks:
+  docker-net:
+    driver: bridge
+    
